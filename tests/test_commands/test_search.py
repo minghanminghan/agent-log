@@ -17,7 +17,7 @@ def _make_repo(tmp_path):
 
 def _make_session_file(sessions_dir: Path, session_id: str, records: list) -> Path:
     ts = "2025-03-10_143022"
-    path = sessions_dir / f"{ts}_{session_id[:8]}.jsonl"
+    path = sessions_dir / f"{ts}_claude_{session_id[:8]}.jsonl"
     with open(path, "w", encoding="utf-8") as f:
         for rec in records:
             f.write(json.dumps(rec) + "\n")

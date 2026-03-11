@@ -23,5 +23,8 @@ dev = [
 [tool.hatch.build.targets.wheel]
 packages = ["agentlog"]
 
+[tool.hatch.build.targets.wheel.force-include]
+"agentlog/plugins/agentlog.ts" = "agentlog/plugins/agentlog.ts"
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -11,6 +11,8 @@ DEFAULT_CONFIG = {
     "log_user_messages": True,
     "content_max_chars": -1,  # -1 = no cap; set to a positive integer to truncate
     "gitignore": True,
+    "supported": [],  # agents detected at init time
+    "active": [],     # agents enabled for logging
 }
 
 

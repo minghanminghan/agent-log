@@ -7,11 +7,12 @@ from pathlib import Path
 from agentlog.utils.time import now_timestamp
 
 
-def resolve_session_file(sessions_dir: Path, session_id: str) -> Path:
+def resolve_session_file(sessions_dir: Path, session_id: str, agent: str = "claude") -> Path:
     """Find an existing session file or return a path for a new one.
 
     Matches files named `*_<session_id[:8]>.jsonl`. If found, returns that
-    path. Otherwise returns a new path `<timestamp>_<session_id[:8]>.jsonl`.
+    path. Otherwise returns a new path
+    `<timestamp>_<agent-name>_<session_id[:8]>.jsonl`.
     Timestamp includes microseconds to avoid collisions between rapid calls.
     """
     short_id = session_id[:8]
@@ -20,7 +21,7 @@ def resolve_session_file(sessions_dir: Path, session_id: str) -> Path:
     if matches:
         return matches[0]
     timestamp = now_timestamp()
-    return sessions_dir / f"{timestamp}_{short_id}.jsonl"
+    return sessions_dir / f"{timestamp}_{agent}_{short_id}.jsonl"
 
 
 def append_record(path: Path, record: dict) -> None:

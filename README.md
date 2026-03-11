@@ -1,8 +1,8 @@
 # agentlog
 
-> session logging for Claude Code.
+> centralized logging for coding agents across sessions and providers.
 
-`agentlog` captures the context behind your code -- prompts, tool calls, and file changes made by Claude Code -- and stores them in your project as a permanent record.
+`agentlog` captures made by your coding agents across different sessions- prompts, tool calls, file changes- and stores them in your project as a permanent record. This project currently supports Claude Code and OpenCode.
 
 ---
 
@@ -27,7 +27,7 @@ Every agent session writes a structured log file to `.agentlog/sessions/` in you
     2025-03-10_091455887032_abc123de.jsonl
 ```
 
-Filenames are `<timestamp>_<session-id>.jsonl` where the timestamp includes microseconds (`YYYY-MM-DD_HHMMSSffffff`) to prevent collisions between rapid hook calls, and the session ID is the first 8 characters of the agent's native conversation ID. Each new conversation — including after `/clear` — creates a new file.
+Filenames are `<timestamp>_<agent-name>_<session-id>.jsonl` where the timestamp includes microseconds (`YYYY-MM-DD_HHMMSSffffff`) to prevent collisions between rapid hook calls, and the session ID is the first 8 characters of the agent's native conversation ID. Each new conversation — including after `/clear` — creates a new file.
 
 ### Session file format
 
@@ -47,15 +47,7 @@ Filenames are `<timestamp>_<session-id>.jsonl` where the timestamp includes micr
 
 - **Shard files by session.** Each session gets its own file named by timestamp and session ID. Each new conversation — including after `/clear` -- creates a new file automatically.
 
-- **Agent hooks registered on `agentlog init`.** Running `agentlog init` in a folder writes Claude Code hook configuration scoped to that directory. Hooks are calls back into the `agentlog` CLI -- no separate packages to install, no global configuration changed.
-
----
-
-## Features
-
-### For solo developers
-- `agentlog log --days 3` -- show all logs from last 3 days
-- `agentlog log --file src/auth.ts` -- see every agent session that touched a file
+- **Agent hooks registered on `agentlog init`.** Running `agentlog init` in a folder writes creates folder-scoped hook configurations that call back into the `agentlog` CLI.
 
 ---
 
@@ -96,7 +88,7 @@ cd your-repo
 agentlog init
 ```
 
-This registers Claude Code hooks scoped to this directory, creates `.agentlog/sessions/`, copies your global config into `.agentlog/config.json`, and adds a `README.md` inside `.agentlog/` explaining the folder to newcomers.
+This detects coding agents in your terminal environment, registers hooks scoped to this directory, creates `.agentlog/sessions/`, and copies your global config into `.agentlog/config.json`. Per-repo config in `.agentlog/config.json` takes precedence over the global config.
 
 ```
 $ agentlog init
@@ -105,8 +97,6 @@ $ agentlog init
 ✓ Initialized .agentlog/
 ✓ Added .agentlog/ to .gitignore
 ```
-
-Per-repo config in `.agentlog/config.json` takes precedence over the global config.
 
 ---
 
@@ -186,7 +176,7 @@ $ agentlog status
 
 agentlog initialized: yes
 hooks active:
-  claude  ✓  (.claude/settings.json)
+  claude (.claude/settings.json)
 sessions: 14  (2.1 MB)
 config: .agentlog/config.json
 gitignore: yes
@@ -196,46 +186,9 @@ gitignore: yes
 
 ## Implementation
 
-### Architecture
-
-```
-agentlog/
-  agentlog/
-    __main__.py          -- CLI entry point
-    repo.py              -- walk up from cwd to find .agentlog/ root
-    session.py           -- JSONL writing, file locking, path normalisation
-    config.py            -- load and merge global + local config.json
-    utils/
-      time.py            -- shared timestamp helpers (now_utc_iso, now_timestamp, parse_*)
-      session_io.py      -- shared read_session() and find_session_file()
-    hooks/
-      claude.py          -- extract assistant turns from Claude Code transcripts
-    commands/
-      hook.py            -- user-prompt, pre-tool, post-tool, stop
-      init.py
-      stop.py
-      log.py
-      show.py
-      search.py
-      status.py
-      stats.py
-      prune.py
-      export.py
-      config.py
-```
-
-The CLI is a **Python** package installed via `pipx`. Hook registration writes to `.claude/settings.json` pointing back to the `agentlog` CLI -- no separate packages required.
-
 ### Record capture
 
-| Record | Source |
-|---|---|
-| `user_msg` | `UserPromptSubmit` hook — `prompt` field passed directly in payload |
-| `tool_call` | `PreToolUse` hook — file path normalised to repo-root-relative at write time |
-| `tool_result` | `PostToolUse` hook — only written when `log_tool_results: true`; linked to its `tool_call` via `call_id` |
-| `assistant_msg` | `Stop` hook — read from `transcript_path` provided in the payload |
-
-See [CLAUDE.md](CLAUDE.md) for the full hook integration spec.
+See [CLAUDE.md](CLAUDE.md), [OPENCODE.md](OPENCODE.md) for respective hook integration specs.
 
 ### File locking
 

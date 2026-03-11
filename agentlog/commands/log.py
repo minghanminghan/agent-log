@@ -65,7 +65,8 @@ def _parse_session_file(path: Path):
 @click.option("--days", default=None, type=int, help="Show sessions from last N days.")
 @click.option("--today", is_flag=True, default=False, help="Show only today's sessions.")
 @click.option("--file", "file_filter", default=None, help="Show sessions touching this file.")
-def log(days, today, file_filter):
+@click.option("--agent", "agent_filter", default=None, help="Show only sessions from this agent.")
+def log(days, today, file_filter, agent_filter):
     """List recent agent sessions."""
     root = repo_mod.find_root(Path.cwd())
     if root is None:
@@ -101,6 +102,9 @@ def log(days, today, file_filter):
             continue
 
         if norm_filter is not None and norm_filter not in summary["files"]:
+            continue
+
+        if agent_filter is not None and summary["agent"] != agent_filter:
             continue
 
         summaries.append((ts, summary))

@@ -13,6 +13,7 @@ from agentlog import repo as repo_mod
 from agentlog import session as session_mod
 from agentlog import config as config_mod
 from agentlog.hooks import claude
+from agentlog.hooks import opencode as opencode_hook
 from agentlog.utils.time import now_utc_iso, now_timestamp
 
 
@@ -198,16 +199,20 @@ def user_prompt():
         sessions_dir.mkdir(parents=True, exist_ok=True)
 
         session_id = _get_session_id(payload)
-        session_file = session_mod.resolve_session_file(sessions_dir, session_id)
+        active = cfg.get("active", [])
+        agent_name = active[0] if active else "claude"
+        session_file = session_mod.resolve_session_file(sessions_dir, session_id, agent_name)
 
         now = now_utc_iso()
 
         if not _session_has_start(session_file):
+            # Determine agent from active config list; default to "claude" for
+            # backwards compatibility when active is empty (legacy installs).
             session_mod.append_record(session_file, {
                 "v": 1,
                 "type": "session_start",
                 "t": now,
-                "agent": "claude",
+                "agent": agent_name,
                 "session": session_id,
             })
 
@@ -243,7 +248,8 @@ def pre_tool():
         sessions_dir.mkdir(parents=True, exist_ok=True)
 
         session_id = _get_session_id(payload)
-        session_file = session_mod.resolve_session_file(sessions_dir, session_id)
+        agent_name = (cfg.get("active") or ["claude"])[0]
+        session_file = session_mod.resolve_session_file(sessions_dir, session_id, agent_name)
 
         tool_name = payload.get("tool_name", "")
         tool_input = payload.get("tool_input", {}) or {}
@@ -299,7 +305,8 @@ def post_tool():
         sessions_dir.mkdir(parents=True, exist_ok=True)
 
         session_id = _get_session_id(payload)
-        session_file = session_mod.resolve_session_file(sessions_dir, session_id)
+        agent_name = (cfg.get("active") or ["claude"])[0]
+        session_file = session_mod.resolve_session_file(sessions_dir, session_id, agent_name)
 
         tool_name = payload.get("tool_name", "")
         tool_response = payload.get("tool_response", {}) or {}
@@ -343,7 +350,9 @@ def stop():
         sessions_dir.mkdir(parents=True, exist_ok=True)
 
         session_id = _get_session_id(payload)
-        session_file = session_mod.resolve_session_file(sessions_dir, session_id)
+        active = cfg.get("active", [])
+        agent_name = active[0] if active else "claude"
+        session_file = session_mod.resolve_session_file(sessions_dir, session_id, agent_name)
 
         transcript_path = payload.get("transcript_path", "")
         since_t = _get_last_session_end_time(session_file)
@@ -353,7 +362,13 @@ def stop():
 
         if cfg.get("log_assistant_messages", True) and transcript_path:
             try:
-                turns = claude.extract_assistant_turns(transcript_path, since_t)
+                active = cfg.get("active", [])
+                if "opencode" in active:
+                    turns = opencode_hook.extract_assistant_turns(
+                        transcript_path, session_id, since_t
+                    )
+                else:
+                    turns = claude.extract_assistant_turns(transcript_path, since_t)
             except Exception as e:
                 sys.stderr.write(
                     f"agentlog hook stop: could not extract assistant turns "

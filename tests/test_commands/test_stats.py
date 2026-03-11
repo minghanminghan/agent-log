@@ -17,7 +17,7 @@ def _make_repo(tmp_path):
 
 def _make_session_file(sessions_dir: Path, dt: datetime, session_id: str) -> Path:
     ts = dt.strftime("%Y-%m-%d_%H%M%S")
-    path = sessions_dir / f"{ts}_{session_id[:8]}.jsonl"
+    path = sessions_dir / f"{ts}_claude_{session_id[:8]}.jsonl"
     path.write_text(json.dumps({"v": 1, "type": "session_start"}) + "\n")
     return path
 

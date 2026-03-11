@@ -26,6 +26,7 @@ def test_full_session_lifecycle(tmp_path, monkeypatch):
     """Full session lifecycle: init → hooks → log → show → search → stop."""
     monkeypatch.chdir(tmp_path)
     monkeypatch.setattr(Path, "home", lambda: tmp_path / "home")
+    (tmp_path / ".claude").mkdir()
 
     runner = CliRunner()
 
@@ -128,6 +129,7 @@ def test_incomplete_session_log_and_show(tmp_path, monkeypatch):
     """Incomplete session (no Stop): log marks [incomplete], show renders with note."""
     monkeypatch.chdir(tmp_path)
     monkeypatch.setattr(Path, "home", lambda: tmp_path / "home")
+    (tmp_path / ".claude").mkdir()
 
     runner = CliRunner()
     runner.invoke(cli, ["init"])
@@ -152,6 +154,7 @@ def test_two_concurrent_sessions(tmp_path, monkeypatch):
     """Two concurrent sessions produce separate files with no cross-contamination."""
     monkeypatch.chdir(tmp_path)
     monkeypatch.setattr(Path, "home", lambda: tmp_path / "home")
+    (tmp_path / ".claude").mkdir()
 
     runner = CliRunner()
     runner.invoke(cli, ["init"])
@@ -187,13 +190,14 @@ def test_prune_after_integration(tmp_path, monkeypatch):
     """prune correctly identifies old vs new files."""
     monkeypatch.chdir(tmp_path)
     monkeypatch.setattr(Path, "home", lambda: tmp_path / "home")
+    (tmp_path / ".claude").mkdir()
 
     runner = CliRunner()
     runner.invoke(cli, ["init"])
 
     sessions_dir = tmp_path / ".agentlog" / "sessions"
     # Create an old file manually
-    old_file = sessions_dir / "2020-01-01_000000_oldold12.jsonl"
+    old_file = sessions_dir / "2020-01-01_000000_claude_oldold12.jsonl"
     old_file.write_text(json.dumps({"v": 1, "type": "session_start"}) + "\n")
 
     # Create a recent file via hook

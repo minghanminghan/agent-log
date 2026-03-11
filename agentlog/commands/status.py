@@ -6,6 +6,7 @@ from pathlib import Path
 import click
 
 from agentlog import repo as repo_mod
+from agentlog import config as config_mod
 
 _AGENTLOG_COMMANDS = {
     "agentlog hook user-prompt",
@@ -15,7 +16,7 @@ _AGENTLOG_COMMANDS = {
 }
 
 
-def _hooks_active(cwd: Path) -> bool:
+def _claude_hooks_active(cwd: Path) -> bool:
     settings_path = cwd / ".claude" / "settings.json"
     if not settings_path.is_file():
         return False
@@ -33,6 +34,10 @@ def _hooks_active(cwd: Path) -> bool:
     return False
 
 
+def _opencode_plugin_present(cwd: Path) -> bool:
+    return (cwd / ".opencode" / "plugins" / "agentlog.ts").is_file()
+
+
 def _format_size(nbytes: int) -> str:
     if nbytes < 1024:
         return f"{nbytes} B"
@@ -46,7 +51,7 @@ def _format_size(nbytes: int) -> str:
 def status():
     """Show agentlog status for the current directory."""
     cwd = Path.cwd()
-    root = repo_mod.find_root(cwd)
+    root: Path = repo_mod.find_root(cwd)
 
     agentlog_dir = (root / ".agentlog") if root else (cwd / ".agentlog")
     initialized = root is not None and agentlog_dir.is_dir()
@@ -54,11 +59,38 @@ def status():
     click.echo(f"agentlog initialized: {'yes' if initialized else 'no'}")
 
     if initialized:
-        # Hooks status
-        active = _hooks_active(root)
-        if active:
+        cfg = config_mod.load_config(root)
+        active_agents = cfg.get("active", [])
+        supported_agents = cfg.get("supported", [])
+
+        # Build hook status lines per agent
+        hook_lines = []
+
+        for ag in supported_agents:
+            is_active = ag in active_agents
+            if ag == "claude":
+                present = _claude_hooks_active(root)
+                location = ".claude/settings.json"
+            elif ag == "opencode":
+                present = _opencode_plugin_present(root)
+                location = ".opencode/plugins/agentlog.ts"
+            else:
+                hook_lines.append(f"  {ag}  (unknown agent, skipped)")
+                continue
+
+            if not is_active:
+                hook_lines.append(f"  {ag}  (disabled)")
+            elif present:
+                hook_lines.append(f"  {ag}: hook active at {location}")
+            else:
+                hook_lines.append(
+                    f"  {ag}: hook missing — re-run agentlog init"
+                )
+
+        if hook_lines:
             click.echo("hooks active:")
-            click.echo("  claude  ✓  (.claude/settings.json)")
+            for line in hook_lines:
+                click.echo(line)
         else:
             click.echo("hooks active: no")
 

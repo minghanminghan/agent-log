@@ -15,13 +15,13 @@ def _make_repo(tmp_path):
     return tmp_path
 
 
-def _make_session(sessions_dir: Path, session_id: str, dt: datetime, files=None, complete=True):
+def _make_session(sessions_dir: Path, session_id: str, dt: datetime, files=None, complete=True, agent="claude"):
     """Create a minimal session JSONL file."""
     ts = dt.strftime("%Y-%m-%d_%H%M%S")
     t = dt.strftime("%Y-%m-%dT%H:%M:%SZ")
-    path = sessions_dir / f"{ts}_{session_id[:8]}.jsonl"
+    path = sessions_dir / f"{ts}_{agent}_{session_id[:8]}.jsonl"
     records = [
-        {"v": 1, "type": "session_start", "t": t, "agent": "claude", "session": session_id},
+        {"v": 1, "type": "session_start", "t": t, "agent": agent, "session": session_id},
         {"v": 1, "type": "user_msg", "t": t, "content": "test"},
     ]
     for f in (files or []):
@@ -132,6 +132,70 @@ def test_log_empty_sessions_dir_no_error(tmp_path, monkeypatch):
     result = runner.invoke(cli, ["log"])
     assert result.exit_code == 0
     assert result.output.strip() == ""
+
+
+def test_log_agent_filter_includes_matching(tmp_path, monkeypatch):
+    """--agent claude returns only claude sessions."""
+    _make_repo(tmp_path)
+    monkeypatch.chdir(tmp_path)
+    sessions_dir = tmp_path / ".agentlog" / "sessions"
+    now = datetime.now(timezone.utc)
+    _make_session(sessions_dir, "claud123", now, agent="claude")
+    _make_session(sessions_dir, "open1234", now - timedelta(seconds=1), agent="opencode")
+
+    runner = CliRunner()
+    result = runner.invoke(cli, ["log", "--agent", "claude"])
+    assert result.exit_code == 0
+    assert "claud123" in result.output
+    assert "open1234" not in result.output
+
+
+def test_log_agent_filter_opencode(tmp_path, monkeypatch):
+    """--agent opencode returns only opencode sessions."""
+    _make_repo(tmp_path)
+    monkeypatch.chdir(tmp_path)
+    sessions_dir = tmp_path / ".agentlog" / "sessions"
+    now = datetime.now(timezone.utc)
+    _make_session(sessions_dir, "claud123", now, agent="claude")
+    _make_session(sessions_dir, "open1234", now - timedelta(seconds=1), agent="opencode")
+
+    runner = CliRunner()
+    result = runner.invoke(cli, ["log", "--agent", "opencode"])
+    assert result.exit_code == 0
+    assert "open1234" in result.output
+    assert "claud123" not in result.output
+
+
+def test_log_agent_filter_no_match(tmp_path, monkeypatch):
+    """--agent with no matching sessions produces empty output."""
+    _make_repo(tmp_path)
+    monkeypatch.chdir(tmp_path)
+    sessions_dir = tmp_path / ".agentlog" / "sessions"
+    now = datetime.now(timezone.utc)
+    _make_session(sessions_dir, "claud123", now, agent="claude")
+
+    runner = CliRunner()
+    result = runner.invoke(cli, ["log", "--agent", "opencode"])
+    assert result.exit_code == 0
+    assert result.output.strip() == ""
+
+
+def test_log_agent_filter_combines_with_days(tmp_path, monkeypatch):
+    """--agent and --days can be combined."""
+    _make_repo(tmp_path)
+    monkeypatch.chdir(tmp_path)
+    sessions_dir = tmp_path / ".agentlog" / "sessions"
+    now = datetime.now(timezone.utc)
+    _make_session(sessions_dir, "claud_new", now - timedelta(days=1), agent="claude")
+    _make_session(sessions_dir, "claud_old", now - timedelta(days=10), agent="claude")
+    _make_session(sessions_dir, "open_new", now - timedelta(days=1), agent="opencode")
+
+    runner = CliRunner()
+    result = runner.invoke(cli, ["log", "--agent", "claude", "--days", "3"])
+    assert result.exit_code == 0
+    assert "claud_ne" in result.output  # first 8 chars of session_id
+    assert "claud_ol" not in result.output
+    assert "open_new" not in result.output
 
 
 def test_log_outside_repo_exits_1(tmp_path, monkeypatch):

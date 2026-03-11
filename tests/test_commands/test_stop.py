@@ -77,12 +77,64 @@ def test_stop_no_error_if_no_settings_file(tmp_path, monkeypatch):
     assert result.exit_code == 0
 
 
+def test_stop_no_error_with_agent_claude_flag(tmp_path, monkeypatch):
+    """stop --agent claude works the same as default."""
+    monkeypatch.chdir(tmp_path)
+    _make_settings(tmp_path, hooks={
+        "Stop": [{"hooks": [{"type": "command", "command": "agentlog hook stop"}]}],
+    })
+    runner = CliRunner()
+    result = runner.invoke(cli, ["stop", "--agent", "claude"])
+    assert result.exit_code == 0
+    settings = json.loads((tmp_path / ".claude" / "settings.json").read_text())
+    assert "Stop" not in settings.get("hooks", {})
+
+
+def test_stop_opencode_removes_plugin_file(tmp_path, monkeypatch):
+    """stop --agent opencode removes .opencode/plugins/agentlog.ts."""
+    monkeypatch.chdir(tmp_path)
+    plugin_path = tmp_path / ".opencode" / "plugins" / "agentlog.ts"
+    plugin_path.parent.mkdir(parents=True)
+    plugin_path.write_text("// agentlog plugin\n")
+    runner = CliRunner()
+    result = runner.invoke(cli, ["stop", "--agent", "opencode"])
+    assert result.exit_code == 0
+    assert not plugin_path.exists()
+
+
+def test_stop_opencode_noop_when_plugin_absent(tmp_path, monkeypatch):
+    """stop --agent opencode exits 0 when plugin file is absent."""
+    monkeypatch.chdir(tmp_path)
+    runner = CliRunner()
+    result = runner.invoke(cli, ["stop", "--agent", "opencode"])
+    assert result.exit_code == 0
+
+
+def test_stop_all_removes_both(tmp_path, monkeypatch):
+    """stop --agent all removes both claude hooks and opencode plugin."""
+    monkeypatch.chdir(tmp_path)
+    _make_settings(tmp_path, hooks={
+        "Stop": [{"hooks": [{"type": "command", "command": "agentlog hook stop"}]}],
+    })
+    plugin_path = tmp_path / ".opencode" / "plugins" / "agentlog.ts"
+    plugin_path.parent.mkdir(parents=True)
+    plugin_path.write_text("// agentlog plugin\n")
+    runner = CliRunner()
+    result = runner.invoke(cli, ["stop", "--agent", "all"])
+    assert result.exit_code == 0
+    # Claude hooks removed
+    settings = json.loads((tmp_path / ".claude" / "settings.json").read_text())
+    assert "Stop" not in settings.get("hooks", {})
+    # OpenCode plugin removed
+    assert not plugin_path.exists()
+
+
 def test_stop_does_not_touch_agentlog_dir(tmp_path, monkeypatch):
     """stop does not touch .agentlog/ directory."""
     monkeypatch.chdir(tmp_path)
     agentlog_dir = tmp_path / ".agentlog" / "sessions"
     agentlog_dir.mkdir(parents=True)
-    session_file = agentlog_dir / "2025-03-10_143022_abc12345.jsonl"
+    session_file = agentlog_dir / "2025-03-10_143022_claude_abc12345.jsonl"
     session_file.write_text('{"v":1,"type":"session_start"}\n')
 
     _make_settings(tmp_path, hooks={

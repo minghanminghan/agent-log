@@ -15,7 +15,7 @@ def _make_repo(tmp_path):
 
 
 def _make_session_file(sessions_dir: Path, session_id: str, ts_prefix: str = "2025-03-10_143022") -> Path:
-    path = sessions_dir / f"{ts_prefix}_{session_id[:8]}.jsonl"
+    path = sessions_dir / f"{ts_prefix}_claude_{session_id[:8]}.jsonl"
     records = [
         {"v": 1, "type": "session_start", "t": "2025-03-10T14:30:22Z", "agent": "claude", "session": session_id},
         {"v": 1, "type": "user_msg", "t": "2025-03-10T14:30:45Z", "content": "hello world"},

@@ -37,9 +37,10 @@ def parse_iso_timestamp(t_str: str) -> datetime:
 def parse_filename_date(path: Path) -> datetime:
     """Parse the date/time embedded in a session filename.
 
-    Handles both formats:
-      - Old: YYYY-MM-DD_HHMMSS_<id>.jsonl
-      - New: YYYY-MM-DD_HHMMSSffffff_<id>.jsonl  (with microseconds)
+    Handles all formats:
+      - Old:     YYYY-MM-DD_HHMMSS_<id>.jsonl
+      - Old new: YYYY-MM-DD_HHMMSSffffff_<id>.jsonl  (with microseconds)
+      - Current: YYYY-MM-DD_HHMMSSffffff_<agent>_<id>.jsonl
 
     Returns datetime.min (UTC) if the filename cannot be parsed.
     """

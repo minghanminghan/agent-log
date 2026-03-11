@@ -65,7 +65,7 @@ def test_resolve_session_file_existing(tmp_path):
     """resolve_session_file returns the existing file for a known session ID."""
     sessions_dir = tmp_path / "sessions"
     sessions_dir.mkdir()
-    existing = sessions_dir / "2025-03-10_143022_def456ab.jsonl"
+    existing = sessions_dir / "2025-03-10_143022_claude_def456ab.jsonl"
     existing.touch()
 
     result = resolve_session_file(sessions_dir, "def456ab")
@@ -76,7 +76,7 @@ def test_resolve_session_file_existing_with_long_id(tmp_path):
     """resolve_session_file truncates to 8 chars when matching."""
     sessions_dir = tmp_path / "sessions"
     sessions_dir.mkdir()
-    existing = sessions_dir / "2025-03-10_143022_def456ab.jsonl"
+    existing = sessions_dir / "2025-03-10_143022_claude_def456ab.jsonl"
     existing.touch()
 
     result = resolve_session_file(sessions_dir, "def456ab_extra_stuff")
@@ -88,11 +88,11 @@ def test_resolve_session_file_new(tmp_path):
     sessions_dir = tmp_path / "sessions"
     sessions_dir.mkdir()
 
-    result = resolve_session_file(sessions_dir, "newid123")
+    result = resolve_session_file(sessions_dir, "newid123", "claude")
     assert result.parent == sessions_dir
-    # Filename: YYYY-MM-DD_HHMMSSffffff_newid123.jsonl (12-digit time with microseconds)
+    # Filename: YYYY-MM-DD_HHMMSSffffff_claude_newid123.jsonl
     import re
-    assert re.match(r"\d{4}-\d{2}-\d{2}_\d{12}_newid123\.jsonl", result.name)
+    assert re.match(r"\d{4}-\d{2}-\d{2}_\d{12}_claude_newid123\.jsonl", result.name)
 
 
 def test_normalise_file_path_absolute(tmp_path):

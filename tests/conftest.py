@@ -20,7 +20,7 @@ def tmp_repo(tmp_path):
 def sample_session_file(tmp_repo):
     """Create a sample session JSONL file."""
     sessions_dir = tmp_repo / ".agentlog" / "sessions"
-    session_file = sessions_dir / "2025-03-10_143022_def456ab.jsonl"
+    session_file = sessions_dir / "2025-03-10_143022_claude_def456ab.jsonl"
     records = [
         {"v": 1, "type": "session_start", "t": "2025-03-10T14:30:22Z", "agent": "claude", "session": "def456ab"},
         {"v": 1, "type": "user_msg", "t": "2025-03-10T14:30:45Z", "content": "refactor the auth module"},

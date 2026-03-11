@@ -1,4 +1,4 @@
-"""agentlog stop command — remove hook entries from .claude/settings.json."""
+"""agentlog stop command — remove hook entries from .claude/settings.json or opencode plugin."""
 
 import json
 from pathlib import Path
@@ -11,6 +11,8 @@ _AGENTLOG_COMMANDS = {
     "agentlog hook post-tool",
     "agentlog hook stop",
 }
+
+_OPENCODE_PLUGIN_PATH = Path(".opencode") / "plugins" / "agentlog.ts"
 
 
 def _is_agentlog_hook(command: str) -> bool:
@@ -40,14 +42,12 @@ def _filter_entries(entries: list) -> list:
     return result
 
 
-@click.command("stop")
-def stop():
+def _stop_claude(cwd: Path) -> None:
     """Remove agentlog hooks from .claude/settings.json."""
-    cwd = Path.cwd()
     settings_path = cwd / ".claude" / "settings.json"
 
     if not settings_path.is_file():
-        click.echo("No .claude/settings.json found — nothing to do.")
+        click.echo("No .claude/settings.json found, nothing to do.")
         return
 
     try:
@@ -59,7 +59,7 @@ def stop():
 
     hooks_section = settings.get("hooks", {})
     if not hooks_section:
-        click.echo("No hooks found — nothing to do.")
+        click.echo("No hooks found, nothing to do.")
         return
 
     new_hooks = {}
@@ -80,5 +80,37 @@ def stop():
         json.dump(settings, f, indent=2)
         f.write("\n")
 
-    click.echo("✓ agentlog hooks removed from .claude/settings.json")
-    click.echo("  .agentlog/ directory left intact.")
+    click.echo("agentlog hooks removed from .claude/settings.json")
+    click.echo(".agentlog/ directory left intact.")
+
+
+def _stop_opencode(cwd: Path) -> None:
+    """Remove the agentlog plugin from .opencode/plugins/."""
+    plugin_path = cwd / _OPENCODE_PLUGIN_PATH
+    if not plugin_path.is_file():
+        click.echo("No .opencode/plugins/agentlog.ts found, nothing to do.")
+        return
+    plugin_path.unlink()
+    click.echo("agentlog plugin removed (.opencode/plugins/agentlog.ts)")
+    click.echo(".agentlog/ directory left intact.")
+
+
+@click.command("stop")
+@click.option(
+    "--agent",
+    default="claude",
+    type=click.Choice(["claude", "opencode", "all"], case_sensitive=False),
+    help="Agent to remove hooks for (default: claude).",
+)
+def stop(agent):
+    """Remove agentlog hooks or plugin for the specified agent."""
+    cwd = Path.cwd()
+    agent_lower = agent.lower()
+
+    if agent_lower == "claude":
+        _stop_claude(cwd)
+    elif agent_lower == "opencode":
+        _stop_opencode(cwd)
+    elif agent_lower == "all":
+        _stop_claude(cwd)
+        _stop_opencode(cwd)
