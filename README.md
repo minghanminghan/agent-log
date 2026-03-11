@@ -2,7 +2,7 @@
 
 > session logging for Claude Code.
 
-`agentlog` captures the context behind your code -- the prompts, tool calls, and file changes made by Claude Code -- and stores them alongside your repository as a permanent, portable record. It bridges the gap between AI observability platforms (external, ephemeral) and version control (blind to how code was produced).
+`agentlog` captures the context behind your code -- prompts, tool calls, and file changes made by Claude Code -- and stores them in your project as a permanent record.
 
 ---
 
