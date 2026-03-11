@@ -20,7 +20,7 @@ def _make_repo(tmp_path):
 def _run_hook(tmp_path, subcommand, payload, monkeypatch):
     """Run 'agentlog hook <subcommand>' with the given payload as stdin."""
     monkeypatch.chdir(tmp_path)
-    runner = CliRunner(mix_stderr=False)
+    runner = CliRunner()
     stdin_data = json.dumps(payload)
     result = runner.invoke(cli, ["hook", subcommand], input=stdin_data)
     return result
@@ -201,7 +201,7 @@ def test_hook_outside_repo_exits_0_writes_nothing(tmp_path, monkeypatch):
     """Hook called outside initialised repo exits 0 and writes nothing."""
     # No .agentlog directory
     monkeypatch.chdir(tmp_path)
-    runner = CliRunner(mix_stderr=False)
+    runner = CliRunner()
     payload = {"session_id": "abcd1234", "transcript_path": "/tmp/t.jsonl", "prompt": "hi"}
     result = runner.invoke(cli, ["hook", "user-prompt"], input=json.dumps(payload))
     assert result.exit_code == 0
@@ -213,6 +213,6 @@ def test_hook_never_exits_nonzero_on_bad_input(tmp_path, monkeypatch):
     """Hook commands must never exit non-zero even on malformed input."""
     _make_repo(tmp_path)
     monkeypatch.chdir(tmp_path)
-    runner = CliRunner(mix_stderr=False)
+    runner = CliRunner()
     result = runner.invoke(cli, ["hook", "user-prompt"], input="not json at all")
     assert result.exit_code == 0

@@ -96,6 +96,6 @@ def test_export_unknown_session_id_exits_1(tmp_path, monkeypatch):
     """Unknown session ID exits 1."""
     _make_repo(tmp_path)
     monkeypatch.chdir(tmp_path)
-    runner = CliRunner(mix_stderr=False)
+    runner = CliRunner()
     result = runner.invoke(cli, ["export", "nonexistent"])
     assert result.exit_code == 1

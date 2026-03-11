@@ -70,7 +70,7 @@ def test_show_unknown_session_id_exits_1(tmp_path, monkeypatch):
     """show unknown session ID exits 1 with clear error."""
     _make_repo(tmp_path)
     monkeypatch.chdir(tmp_path)
-    runner = CliRunner(mix_stderr=False)
+    runner = CliRunner()
     result = runner.invoke(cli, ["show", "nonexistent"])
     assert result.exit_code == 1
 

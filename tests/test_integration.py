@@ -27,7 +27,7 @@ def test_full_session_lifecycle(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     monkeypatch.setattr(Path, "home", lambda: tmp_path / "home")
 
-    runner = CliRunner(mix_stderr=False)
+    runner = CliRunner()
 
     # Init
     result = runner.invoke(cli, ["init"])
@@ -129,7 +129,7 @@ def test_incomplete_session_log_and_show(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     monkeypatch.setattr(Path, "home", lambda: tmp_path / "home")
 
-    runner = CliRunner(mix_stderr=False)
+    runner = CliRunner()
     runner.invoke(cli, ["init"])
 
     transcript = _make_transcript(tmp_path)
@@ -153,7 +153,7 @@ def test_two_concurrent_sessions(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     monkeypatch.setattr(Path, "home", lambda: tmp_path / "home")
 
-    runner = CliRunner(mix_stderr=False)
+    runner = CliRunner()
     runner.invoke(cli, ["init"])
 
     transcript = _make_transcript(tmp_path)
@@ -188,7 +188,7 @@ def test_prune_after_integration(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     monkeypatch.setattr(Path, "home", lambda: tmp_path / "home")
 
-    runner = CliRunner(mix_stderr=False)
+    runner = CliRunner()
     runner.invoke(cli, ["init"])
 
     sessions_dir = tmp_path / ".agentlog" / "sessions"

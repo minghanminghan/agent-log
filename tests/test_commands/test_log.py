@@ -137,6 +137,6 @@ def test_log_empty_sessions_dir_no_error(tmp_path, monkeypatch):
 def test_log_outside_repo_exits_1(tmp_path, monkeypatch):
     """Outside initialised repo exits 1 with helpful message."""
     monkeypatch.chdir(tmp_path)
-    runner = CliRunner(mix_stderr=False)
+    runner = CliRunner()
     result = runner.invoke(cli, ["log"])
     assert result.exit_code == 1
