@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from agentlog.hooks.claude import extract_assistant_turns
+from agentlog.providers.claude.hooks import extract_assistant_turns
 
 
 def _write_transcript(path: Path, entries: list) -> None:

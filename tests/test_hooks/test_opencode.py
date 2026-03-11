@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from agentlog.hooks.opencode import extract_assistant_turns
+from agentlog.providers.opencode.hooks import extract_assistant_turns
 
 
 SESSION_ID = "sess_abc123"

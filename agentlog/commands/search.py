@@ -20,8 +20,8 @@ def search(query, file_filter):
     root = repo_mod.find_root(Path.cwd())
     if root is None:
         click.echo(
-            "Error: not inside an agentlog-initialized directory. "
-            "Run 'agentlog init' to initialize.",
+            "Error: agentlog not initialized in this directory."
+            "Run 'agentlog init'.",
             err=True,
         )
         sys.exit(1)

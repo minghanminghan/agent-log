@@ -6,14 +6,14 @@ import sys
 import tempfile
 from pathlib import Path
 from typing import Optional
+from datetime import datetime, timezone
 
 import click
 
 from agentlog import repo as repo_mod
 from agentlog import session as session_mod
 from agentlog import config as config_mod
-from agentlog.hooks import claude
-from agentlog.hooks import opencode as opencode_hook
+from agentlog.providers import EXTRACTORS
 from agentlog.utils.time import now_utc_iso, now_timestamp
 
 
@@ -100,10 +100,8 @@ def _retrieve_call_id(session_id: str) -> Optional[str]:
 # Session file introspection helpers
 # ---------------------------------------------------------------------------
 
-def _get_last_session_end_time(session_file: Path) -> Optional[object]:
+def _get_last_session_end_time(session_file: Path) -> Optional[datetime]:
     """Return the datetime of the last session_end record, or None."""
-    from datetime import datetime, timezone
-
     if not session_file.is_file():
         return None
     last_end = None
@@ -363,12 +361,11 @@ def stop():
         if cfg.get("log_assistant_messages", True) and transcript_path:
             try:
                 active = cfg.get("active", [])
-                if "opencode" in active:
-                    turns = opencode_hook.extract_assistant_turns(
-                        transcript_path, session_id, since_t
-                    )
-                else:
-                    turns = claude.extract_assistant_turns(transcript_path, since_t)
+                extractor = next(
+                    (EXTRACTORS[p] for p in active if p in EXTRACTORS),
+                    EXTRACTORS["claude"],
+                )
+                turns = extractor(transcript_path, session_id, since_t)
             except Exception as e:
                 sys.stderr.write(
                     f"agentlog hook stop: could not extract assistant turns "

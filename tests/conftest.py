@@ -9,7 +9,7 @@ import pytest
 
 @pytest.fixture
 def tmp_repo(tmp_path):
-    """Create a temporary agentlog-initialized repo."""
+    """Create a temporary repo with agentlog initialized."""
     agentlog_dir = tmp_path / ".agentlog"
     sessions_dir = agentlog_dir / "sessions"
     sessions_dir.mkdir(parents=True)

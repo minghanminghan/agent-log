@@ -92,10 +92,10 @@ This detects coding agents in your terminal environment, registers hooks scoped 
 
 ```
 $ agentlog init
-✓ Detected: claude
-✓ Hooks registered (directory-scoped)
-✓ Initialized .agentlog/
-✓ Added .agentlog/ to .gitignore
+Detected: claude
+Regiestered directory-scope hooks
+Initialized .agentlog/
+Added .agentlog/ to .gitignore
 ```
 
 ---

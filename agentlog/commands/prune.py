@@ -1,24 +1,26 @@
 """agentlog prune command — delete old session files."""
 
 import sys
-from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from typing import Optional
+from datetime import datetime, timedelta, timezone
 
 import click
 
 from agentlog import repo as repo_mod
 
 
-def _parse_filename_date(path: Path) -> datetime:
+def _parse_filename_date(path: Path) -> Optional[datetime]:
     stem = path.stem
     parts = stem.split("_")
-    if len(parts) >= 2:
-        try:
-            dt = datetime.strptime(parts[0] + "_" + parts[1], "%Y-%m-%d_%H%M%S")
-            return dt.replace(tzinfo=timezone.utc)
-        except Exception:
-            pass
-    return None
+    try:
+        dt = datetime.strptime(parts[0] + "_" + parts[1], "%Y-%m-%d_%H%M%S")
+        return dt.replace(tzinfo=timezone.utc)
+    except Exception:
+        click.echo(
+            f"Warning: could not parse date from filename {path.name}. Skipping.",
+            err=True,
+        )
 
 
 def _format_size(nbytes: int) -> str:
@@ -38,7 +40,11 @@ def prune(days, before_date, preview):
     """Delete old session files."""
     root = repo_mod.find_root(Path.cwd())
     if root is None:
-        click.echo("Error: not inside an agentlog-initialized directory.", err=True)
+        click.echo(
+            "Error: agentlog not initialized in this directory."
+            "Run 'agentlog init'.",
+            err=True,
+        )
         sys.exit(1)
 
     if days is None and before_date is None:
@@ -67,7 +73,7 @@ def prune(days, before_date, preview):
         file_date = _parse_filename_date(path)
         if file_date is None:
             continue
-        if file_date < cutoff:
+        elif file_date < cutoff:
             to_delete.append(path)
 
     if not to_delete:

@@ -29,4 +29,4 @@ def config_init():
         json.dump(DEFAULT_CONFIG, f, indent=2)
         f.write("\n")
 
-    click.echo(f"✓ Created: {config_path}")
+    click.echo(f"Created: {config_path}")
