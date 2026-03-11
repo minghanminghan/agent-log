@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "coding-agent-log"
-version = "0.1.0"
+version = "0.1.1"
 description = "Session logging for Claude Code"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -19,6 +19,9 @@ agentlog = "agentlog.__main__:main"
 dev = [
     "pytest>=7.0",
 ]
+
+[tool.hatch.build.targets.wheel]
+packages = ["agentlog"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
